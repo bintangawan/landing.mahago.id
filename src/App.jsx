@@ -3,6 +3,7 @@ import Hero from "./components/Hero";
 import PromoBanner from "./components/PromoBanner";
 import Fitur from "./components/Fitur";
 import PromoSection from "./components/PromoSection";
+import ContactSection from "./components/ContactSection";
 import MitraSection from "./components/MitraSection";
 import Footer from "./components/Footer";
 import "./index.css";
@@ -15,6 +16,7 @@ export default function App() {
       <PromoBanner />
       <Fitur />
       <PromoSection />
+      <ContactSection />
       <MitraSection />
       <Footer />
     </div>

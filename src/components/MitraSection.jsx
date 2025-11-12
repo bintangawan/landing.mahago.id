@@ -1,4 +1,15 @@
+import { useState, useEffect } from "react";
+import { getWhatsAppLink } from "../utils/adminHelper";
+
 export default function MitraSection() {
+  const [whatsappLink, setWhatsappLink] = useState("");
+
+  useEffect(() => {
+    setWhatsappLink(
+      getWhatsAppLink("Halo,%20saya%20mau%20daftar%20jadi%20mitra%20Mahago!")
+    );
+  }, []);
+
   const benefits = [
     "Waktu kerja fleksibel",
     "Penghasilan tambahan stabil",
@@ -26,7 +37,7 @@ export default function MitraSection() {
             </div>
           ))}
           <a
-            href="https://wa.me/6285765714991?text=Halo,%20saya%20mau%20daftar%20jadi%20mitra%20Mahago!"
+            href={whatsappLink}
             target="_blank"
             rel="noreferrer"
             className="inline-block bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition font-semibold shadow-lg mt-4"
