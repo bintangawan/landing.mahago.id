@@ -1,4 +1,13 @@
+import { useState, useEffect } from "react";
+import { getWhatsAppLink } from "../utils/adminHelper";
+
 export default function Hero() {
+  const [whatsappLink, setWhatsappLink] = useState("");
+
+  useEffect(() => {
+    setWhatsappLink(getWhatsAppLink());
+  }, []);
+
   return (
     <section
       id="home"
@@ -12,12 +21,11 @@ export default function Hero() {
           MahaGo – <span className="text-green-600">Ojek Kampus</span> Tercepat!
         </h2>
         <p className="text-gray-600 mb-6 text-sm sm:text-base">
-          Antar jemput di kampus jadi lebih mudah! Ke kelas, kantin, atau
-          kosan—semua ada di genggamanmu. Cepat, murah, dan terpercaya!
+          Antar jemput di kampus jadi lebih mudah dengan layanan 24 jam!. Ke kelas, kantin, atau kosan, semua ada di genggamanmu!.
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <a
-            href="https://wa.me/6285765714991?text=Bang,%20mau%20dianter%20ke%20...%20dong!"
+            href={whatsappLink}
             target="_blank"
             rel="noreferrer"
             className="inline-block bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition font-semibold text-center shadow-lg hover:shadow-xl"
@@ -34,7 +42,7 @@ export default function Hero() {
       </div>
       <div className="w-full md:w-1/2 flex justify-center">
         <img
-          src="/images/ojek.png"
+          src="/images/ojek.svg"
           alt="Mahago Ojek"
           className="w-64 sm:w-72 md:w-96 animate-float"
         />

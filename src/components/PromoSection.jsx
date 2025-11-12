@@ -3,23 +3,16 @@ export default function PromoSection() {
     {
       id: 1,
       title: "10 Orderan Pertama GRATIS!",
-      desc: "Khusus pengguna baru, 10 orang pertama tanpa biaya sepeserpun!",
+      desc: "Tiap bulan, 1 orang per 1 bulan sampai 10 orang. Kesempatan terbatas setiap bulannya!",
       tag: "Pengguna Baru",
       color: "bg-green-100 text-green-700",
     },
     {
       id: 2,
-      title: "Cuma Rp 3.000 Bulan Ini!",
-      desc: "Promo spesial! Kemana aja di area kampus hanya Rp 3.000 selama bulan ini.",
+      title: "Cuma Rp 3.000!",
+      desc: "Promo spesial! Kemana aja di area kampus hanya Rp 3.000. Berlaku sampai 31 Desember 2025.",
       tag: "Terbatas",
       color: "bg-yellow-100 text-yellow-700",
-    },
-    {
-      id: 3,
-      title: "Ajak Teman, Dapat Bonus!",
-      desc: "Referral teman kamu dan dapatkan 3 perjalanan gratis untuk setiap teman yang bergabung!",
-      tag: "Unlimited",
-      color: "bg-blue-100 text-blue-700",
     },
   ];
 
@@ -35,7 +28,7 @@ export default function PromoSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12">
           {promos.map(({ id, title, desc, tag, color }) => (
             <div
               key={id}
@@ -55,7 +48,7 @@ export default function PromoSection() {
           ))}
         </div>
 
-        <div className="bg-linear-to-br from-green-600 to-green-700 rounded-2xl p-8 sm:p-12 text-center text-white shadow-2xl">
+        {/* <div className="bg-linear-to-br from-green-600 to-green-700 rounded-2xl p-8 sm:p-12 text-center text-white shadow-2xl">
           <h3 className="text-2xl sm:text-3xl font-bold mb-4">
             Tunggu Apa Lagi? Yuk Pesan Sekarang! 🚀
           </h3>
@@ -74,7 +67,7 @@ export default function PromoSection() {
           <p className="text-xs sm:text-sm mt-4 opacity-75">
             Atau hubungi: <span className="font-semibold">0857-6571-4991</span>
           </p>
-        </div>
+        </div> */}
       </div>
     </section>
   );

@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
+import { getWhatsAppLink } from "../utils/adminHelper";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [whatsappLink, setWhatsappLink] = useState("");
 
   // ✅ Tambahkan CSS smooth scroll global
   useEffect(() => {
     document.documentElement.style.scrollBehavior = "smooth";
+    // Set WhatsApp link berdasarkan admin yang aktif
+    setWhatsappLink(getWhatsAppLink());
   }, []);
 
   // ✅ Fungsi smooth scroll manual biar tidak nembak
@@ -23,13 +27,13 @@ export default function Navbar() {
     <header className="fixed top-0 left-0 w-full bg-white/95 backdrop-blur-md z-50 shadow-md border-b-2 border-green-600">
       <nav className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 py-3">
         {/* Logo */}
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-xl">M</span>
-          </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-green-700">
-            MahaGo
-          </h1>
+        <div className="flex items-center gap-3">
+          <img
+            src="/images/MahaGo Logo.svg"
+            alt="MahaGo Logo"
+            className="h-10 sm:h-12 w-auto"
+          />
+          <h1 className="text-xl sm:text-2xl font-bold text-green-700">MahaGo</h1>
         </div>
 
         {/* Menu Desktop */}
@@ -58,11 +62,19 @@ export default function Navbar() {
               Promo
             </button>
           </li>
+          <li>
+            <button
+              onClick={() => handleScroll("#contact")}
+              className="hover:text-green-600 transition"
+            >
+              Hubungi Kami
+            </button>
+          </li>
         </ul>
 
         {/* Tombol WhatsApp Desktop */}
         <a
-          href="https://wa.me/6285765714991?text=Bang,%20mau%20dianter%20ke%20...%20dong!"
+          href={whatsappLink}
           target="_blank"
           rel="noreferrer"
           className="hidden md:inline-block bg-green-600 text-white px-4 lg:px-6 py-2 rounded-lg hover:bg-green-700 transition font-semibold text-sm"
@@ -110,8 +122,14 @@ export default function Navbar() {
           >
             Promo
           </button>
+          <button
+            onClick={() => handleScroll("#contact")}
+            className="block w-full text-left px-6 py-3 hover:bg-green-50 transition"
+          >
+            Hubungi Kami
+          </button>
           <a
-            href="https://wa.me/6285765714991?text=Bang,%20mau%20dianter%20ke%20...%20dong!"
+            href={whatsappLink}
             target="_blank"
             rel="noreferrer"
             className="block px-6 py-3 bg-green-600 text-white font-semibold hover:bg-green-700 transition text-center"

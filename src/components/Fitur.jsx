@@ -1,7 +1,7 @@
 export default function Fitur() {
   const fiturList = [
     ["🚴‍♂️", "Pesan Mudah & Cepat", "Langsung order via WhatsApp, tanpa ribet!"],
-    ["💰", "Harga Terjangkau", "Mulai dari Rp 3.000, hemat banget!"],
+    ["💰", "Harga Terjangkau", "Mulai dari Rp 5.000 area kampus, hemat banget!"],
     [
       "⚡",
       "Driver Terpercaya",
@@ -12,6 +12,11 @@ export default function Fitur() {
       "Jangkauan Luas",
       "Dari gedung kuliah sampai kosan, kami siap antar!",
     ],
+    [
+      "🕐",
+      "Operasional 24 Jam",
+      "Layanan kami tersedia kapan saja, siang atau malam!",
+    ],
   ];
 
   return (
@@ -19,7 +24,7 @@ export default function Fitur() {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center px-4 sm:px-6 gap-8">
         <div className="w-full md:w-1/2 flex justify-center">
           <img
-            src="/images/ojeks.png"
+            src="/images/ojeks.svg"
             alt="Fitur Mahago"
             className="w-64 sm:w-72 md:w-96"
           />

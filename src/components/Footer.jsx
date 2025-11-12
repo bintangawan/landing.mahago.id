@@ -1,32 +1,45 @@
 export default function Footer() {
+  const socialMedia = [
+    { name: "Instagram", icon: "fa fa-instagram", url: "#" },
+    { name: "Twitter", icon: "fa fa-twitter", url: "#" },
+    { name: "Facebook", icon: "fa fa-facebook", url: "#" },
+    { name: "TikTok", icon: "fa fa-music", url: "#" }, // Font Awesome 4.7 doesn't have TikTok, using music icon
+  ];
+
   return (
     <footer className="bg-gray-900 text-white py-8 sm:py-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-6">
           <div className="text-center md:text-left">
-            <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
-              <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-xl">M</span>
-              </div>
-              <h1 className="text-2xl font-bold text-green-500">MahaGo</h1>
+            <div className="flex items-center gap-3 justify-center md:justify-start mb-2">
+              <img
+                src="/images/MahaGo Logo.svg"
+                alt="MahaGo Logo"
+                className="h-12 w-auto"
+              />
+              <h1 className="text-xl sm:text-2xl font-bold text-green-700">MahaGo</h1>
             </div>
-            <p className="text-sm text-gray-400">Ojek Kampus Terpercaya</p>
+            <p className="text-sm text-gray-400">Sahabat Mahasiswa</p>
           </div>
-          <div className="flex gap-5">
-            {["Instagram", "Twitter", "Facebook"].map((s) => (
+          <div className="flex gap-5 items-center">
+            {socialMedia.map((social) => (
               <a
-                key={s}
-                href="#"
-                className="hover:text-green-500 transition text-sm"
+                key={social.name}
+                href={social.url}
+                className="hover:text-green-500 transition flex items-center gap-2"
+                title={social.name}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                {s}
+                <i className={`${social.icon} text-xl`} aria-hidden="true"></i>
+                <span className="hidden sm:inline text-sm">{social.name}</span>
               </a>
             ))}
           </div>
         </div>
         <div className="border-t border-gray-800 pt-6 text-center">
           <p className="text-xs sm:text-sm text-gray-400">
-            &copy; 2025 MahaGo – Ojek Kampus. All rights reserved.
+            &copy; 2025 MahaGo – Sahabat Mahasiswa. All rights reserved.
           </p>
         </div>
       </div>

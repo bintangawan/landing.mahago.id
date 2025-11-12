@@ -1,4 +1,13 @@
+import { useState, useEffect } from "react";
+import { getWhatsAppLink } from "../utils/adminHelper";
+
 export default function PromoBanner() {
+  const [whatsappLink, setWhatsappLink] = useState("");
+
+  useEffect(() => {
+    setWhatsappLink(getWhatsAppLink());
+  }, []);
+
   return (
     <section className="py-8 bg-linear-to-r from-green-600 to-green-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -12,7 +21,7 @@ export default function PromoBanner() {
             </p>
           </div>
           <a
-            href="https://wa.me/6285765714991?text=Bang,%20mau%20dianter%20ke%20...%20dong!"
+            href={whatsappLink}
             target="_blank"
             rel="noreferrer"
             className="bg-white text-green-600 px-6 py-3 rounded-lg font-bold hover:bg-gray-100 transition shadow-lg"
