@@ -17,7 +17,7 @@ export default function App() {
       <Fitur />
       <PromoSection />
       <ContactSection />
-      <MitraSection />
+      {/* <MitraSection /> */}
       <Footer />
     </div>
   );
