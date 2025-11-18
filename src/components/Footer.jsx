@@ -1,9 +1,9 @@
 export default function Footer() {
   const socialMedia = [
-    { name: "Instagram", icon: "fa fa-instagram", url: "#" },
-    { name: "Twitter", icon: "fa fa-twitter", url: "#" },
-    { name: "Facebook", icon: "fa fa-facebook", url: "#" },
-    { name: "TikTok", icon: "fa fa-music", url: "#" }, // Font Awesome 4.7 doesn't have TikTok, using music icon
+    { name: "Instagram", icon: "fa fa-instagram", url: "https://www.instagram.com/mahago.id" },
+    { name: "Twitter", icon: "fa fa-twitter", url: "https://twitter.com/mahago_id" },
+    { name: "Facebook", icon: "fa fa-facebook", url: "https://www.facebook.com/mahago.id" },
+    { name: "TikTok", icon: "fa fa-music", url: "https://www.tiktok.com/@mahago.id" }, // Font Awesome 4.7 doesn't have TikTok, using music icon
   ];
 
   return (
@@ -13,11 +13,11 @@ export default function Footer() {
           <div className="text-center md:text-left">
             <div className="flex items-center gap-3 justify-center md:justify-start mb-2">
               <img
-                src="/images/MahaGo Logo.svg"
+                src="/images/MahaGo Logo Footer.svg"
                 alt="MahaGo Logo"
                 className="h-12 w-auto"
               />
-              <h1 className="text-xl sm:text-2xl font-bold text-green-700">MahaGo</h1>
+              {/* <h1 className="text-xl sm:text-2xl font-bold text-green-700">MahaGo</h1> */}
             </div>
             <p className="text-sm text-gray-400">Sahabat Mahasiswa</p>
           </div>
@@ -38,9 +38,15 @@ export default function Footer() {
           </div>
         </div>
         <div className="border-t border-gray-800 pt-6 text-center">
-          <p className="text-xs sm:text-sm text-gray-400">
+          <p className="text-xs sm:text-sm text-gray-400 mb-3">
             &copy; 2025 MahaGo – Sahabat Mahasiswa. All rights reserved.
           </p>
+          <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+            <i className="fa fa-mobile text-green-500" aria-hidden="true"></i>
+            <p>
+              Segera hadir dalam bentuk aplikasi mobile! Stay tuned 🚀
+            </p>
+          </div>
         </div>
       </div>
     </footer>
