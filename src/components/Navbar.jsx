@@ -33,7 +33,7 @@ export default function Navbar() {
             alt="MahaGo Logo"
             className="h-10 sm:h-12 w-auto"
           />
-          <h1 className="text-xl sm:text-2xl font-bold text-green-700">MahaGo</h1>
+          {/* <h1 className="text-xl sm:text-2xl font-bold text-green-700">MahaGo</h1> */}
         </div>
 
         {/* Menu Desktop */}
@@ -64,10 +64,26 @@ export default function Navbar() {
           </li>
           <li>
             <button
+              onClick={() => handleScroll("#howtoorder")}
+              className="hover:text-green-600 transition"
+            >
+              Cara Pesan
+            </button>
+          </li>
+          <li>
+            <button
               onClick={() => handleScroll("#contact")}
               className="hover:text-green-600 transition"
             >
               Hubungi Kami
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => handleScroll("#report")}
+              className="hover:text-red-600 transition text-red-600"
+            >
+              Aduan
             </button>
           </li>
         </ul>
@@ -123,10 +139,22 @@ export default function Navbar() {
             Promo
           </button>
           <button
+            onClick={() => handleScroll("#howtoorder")}
+            className="block w-full text-left px-6 py-3 hover:bg-green-50 transition"
+          >
+            Cara Pesan
+          </button>
+          <button
             onClick={() => handleScroll("#contact")}
             className="block w-full text-left px-6 py-3 hover:bg-green-50 transition"
           >
             Hubungi Kami
+          </button>
+          <button
+            onClick={() => handleScroll("#report")}
+            className="block w-full text-left px-6 py-3 hover:bg-red-50 transition text-red-600"
+          >
+            Aduan
           </button>
           <a
             href={whatsappLink}

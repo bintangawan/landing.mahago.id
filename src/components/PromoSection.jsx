@@ -2,17 +2,10 @@ export default function PromoSection() {
   const promos = [
     {
       id: 1,
-      title: "10 Orderan Pertama GRATIS!",
-      desc: "Tiap bulan, 1 orang per 1 bulan sampai 10 orang. Kesempatan terbatas setiap bulannya!",
-      tag: "Pengguna Baru",
+      title: "MahaGo Day",
+      desc: "Promo spesial Rp 3.000 - Rp 6.000 khusus area kampus UINSU Tuntungan dan sekitarnya. Berlaku sampai akhir Desember 2025!",
+      tag: "Promo Spesial",
       color: "bg-green-100 text-green-700",
-    },
-    {
-      id: 2,
-      title: "Cuma Rp 3.000!",
-      desc: "Promo spesial! Kemana aja di area kampus hanya Rp 3.000. Berlaku sampai 31 Desember 2025.",
-      tag: "Terbatas",
-      color: "bg-yellow-100 text-yellow-700",
     },
   ];
 
@@ -28,7 +21,7 @@ export default function PromoSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12">
+        <div className="grid grid-cols-1 gap-6 max-w-2xl mx-auto mb-12">
           {promos.map(({ id, title, desc, tag, color }) => (
             <div
               key={id}
