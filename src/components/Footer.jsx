@@ -1,7 +1,7 @@
 export default function Footer() {
   const socialMedia = [
     { name: "Instagram", icon: "fa fa-instagram", url: "https://www.instagram.com/mahago.id" },
-    { name: "Twitter", icon: "fa fa-twitter", url: "https://twitter.com/mahago_id" },
+    // { name: "Twitter", icon: "fa fa-twitter", url: "https://twitter.com/mahago_id" },
     { name: "Facebook", icon: "fa fa-facebook", url: "https://www.facebook.com/share/1Bq3fZigvw/?mibextid=wwXIfr" },
     { name: "TikTok", icon: "fa fa-music", url: "https://www.tiktok.com/@mahago.id?_r=1&_t=ZS-91VeQ7YhUsU" }, // Font Awesome 4.7 doesn't have TikTok, using music icon
   ];
