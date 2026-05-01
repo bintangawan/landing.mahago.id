@@ -7,7 +7,7 @@ export default function ReportSection() {
   useEffect(() => {
     setWhatsappLink(
       getWhatsAppLink(
-        "Halo%20Admin,%20saya%20ingin%20menyampaikan%20aduan%20terkait%20layanan%20MahaGo:%0A%0A[Jelaskan%20keluhan%20Anda%20di%20sini]"
+        "Halo Admin, saya ingin menyampaikan aduan terkait layanan MahaGo:\n\n[Jelaskan keluhan Anda di sini]"
       )
     );
   }, []);

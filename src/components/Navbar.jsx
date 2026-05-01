@@ -64,6 +64,14 @@ export default function Navbar() {
           </li>
           <li>
             <button
+              onClick={() => handleScroll("#tarif")}
+              className="hover:text-green-600 transition"
+            >
+              Tarif
+            </button>
+          </li>
+          <li>
+            <button
               onClick={() => handleScroll("#howtoorder")}
               className="hover:text-green-600 transition"
             >
@@ -137,6 +145,12 @@ export default function Navbar() {
             className="block w-full text-left px-6 py-3 hover:bg-green-50 transition"
           >
             Promo
+          </button>
+          <button
+            onClick={() => handleScroll("#tarif")}
+            className="block w-full text-left px-6 py-3 hover:bg-green-50 transition"
+          >
+            Tarif
           </button>
           <button
             onClick={() => handleScroll("#howtoorder")}

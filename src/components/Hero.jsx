@@ -33,10 +33,10 @@ export default function Hero() {
             🚀 Pesan Sekarang
           </a>
           <a
-            href="#promo"
+            href="#tarif"
             className="inline-block bg-white border-2 border-green-600 text-green-600 px-6 py-3 rounded-lg hover:bg-green-50 transition font-semibold text-center"
           >
-            Lihat Promo
+            Cek Tarif
           </a>
         </div>
       </div>
