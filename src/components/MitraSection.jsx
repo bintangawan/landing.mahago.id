@@ -6,7 +6,7 @@ export default function MitraSection() {
 
   useEffect(() => {
     setWhatsappLink(
-      getWhatsAppLink("Halo,%20saya%20mau%20daftar%20jadi%20mitra%20Mahago!")
+      getWhatsAppLink("Halo, saya mau daftar jadi mitra Mahago!")
     );
   }, []);
 

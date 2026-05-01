@@ -30,7 +30,17 @@ export const getCurrentAdmin = () => {
   return admins[0];
 };
 
-export const getWhatsAppLink = (message = "Bang,%20mau%20dianter%20ke%20...%20dong!") => {
+export const DEFAULT_ORDER_MESSAGE = "Bang, mau ke ... dong!";
+
+export const buildWhatsAppLink = (
+  phone,
+  message = DEFAULT_ORDER_MESSAGE
+) => {
+  const encodedMessage = encodeURIComponent(message);
+  return `https://wa.me/${phone}?text=${encodedMessage}`;
+};
+
+export const getWhatsAppLink = (message = DEFAULT_ORDER_MESSAGE) => {
   const admin = getCurrentAdmin();
-  return `https://wa.me/${admin.phone}?text=${message}`;
+  return buildWhatsAppLink(admin.phone, message);
 };

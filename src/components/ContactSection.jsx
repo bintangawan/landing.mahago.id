@@ -1,9 +1,15 @@
 import { useState } from "react";
-import { admins, getCurrentAdmin } from "../utils/adminHelper";
+import {
+  admins,
+  getCurrentAdmin,
+  buildWhatsAppLink,
+  DEFAULT_ORDER_MESSAGE,
+} from "../utils/adminHelper";
 
-export default function ContactSection() {
+export default function ContactSection({ orderMessage }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const currentAdmin = getCurrentAdmin();
+  const messageToSend = orderMessage || DEFAULT_ORDER_MESSAGE;
 
   return (
     <section id="contact" className="py-12 sm:py-16 bg-white">
@@ -40,7 +46,10 @@ export default function ContactSection() {
                   <p className="text-sm opacity-90">{currentAdmin.schedule}</p>
                 </div>
                 <a
-                  href={`https://wa.me/${currentAdmin.phone}?text=Bang,%20mau%20dianter%20ke%20...%20dong!`}
+                  href={buildWhatsAppLink(
+                    currentAdmin.phone,
+                    messageToSend
+                  )}
                   target="_blank"
                   rel="noreferrer"
                   className="bg-white text-green-600 px-6 py-2 rounded-lg font-bold hover:bg-gray-100 transition shadow-lg"
@@ -81,7 +90,7 @@ export default function ContactSection() {
                   {admins.map((admin, index) => (
                     <a
                       key={index}
-                      href={`https://wa.me/${admin.phone}?text=Bang,%20mau%20dianter%20ke%20...%20dong!`}
+                      href={buildWhatsAppLink(admin.phone, messageToSend)}
                       target="_blank"
                       rel="noreferrer"
                       className="block p-4 hover:bg-green-50 transition border-b last:border-b-0"
