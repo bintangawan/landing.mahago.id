@@ -151,153 +151,161 @@ const fetchWeather = async (coords) => {
   };
 };
 
-const buildLocationResult = (result) => ({
-  id: result.place_id,
-  label: result.display_name,
-  coords: {
-    lat: Number.parseFloat(result.lat),
-    lng: Number.parseFloat(result.lon),
-  },
-});
-
 export default function PriceCalculatorSection({ onOrderMessageChange }) {
   const [serviceType, setServiceType] = useState("ride");
-  const [mapMode, setMapMode] = useState("destination");
   const [currentCoords, setCurrentCoords] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
-
+  const [destination, setDestination] = useState(null);
   const [destinationQuery, setDestinationQuery] = useState("");
   const [destinationResults, setDestinationResults] = useState([]);
-  const [destination, setDestination] = useState(null);
-  const [destinationError, setDestinationError] = useState("");
   const [isDestinationSearching, setIsDestinationSearching] = useState(false);
-
+  const [destinationError, setDestinationError] = useState("");
+  const [pickupPoints, setPickupPoints] = useState([]);
   const [pickupQuery, setPickupQuery] = useState("");
   const [pickupResults, setPickupResults] = useState([]);
-  const [pickupPoints, setPickupPoints] = useState([]);
-  const [pickupError, setPickupError] = useState("");
   const [isPickupSearching, setIsPickupSearching] = useState(false);
-
-  const [orderNotes, setOrderNotes] = useState("");
-  const [orderTime, setOrderTime] = useState(() => getCurrentTime());
-  const [lateChargeStart, setLateChargeStart] = useState("23:00");
-
-  const [distanceKmInput, setDistanceKmInput] = useState("");
-  const [distanceMode, setDistanceMode] = useState("auto");
+  const [pickupError, setPickupError] = useState("");
   const [routeLine, setRouteLine] = useState(null);
   const [routeDistanceKm, setRouteDistanceKm] = useState(null);
-  const [routeError, setRouteError] = useState("");
+  const [distanceKmInput, setDistanceKmInput] = useState("");
+  const [distanceMode, setDistanceMode] = useState("auto");
   const [isRouting, setIsRouting] = useState(false);
-
+  const [routeError, setRouteError] = useState("");
+  const [orderTime, setOrderTime] = useState(getCurrentTime());
+  const [autoRain, setAutoRain] = useState(false);
   const [isWeatherLoading, setIsWeatherLoading] = useState(false);
   const [weatherError, setWeatherError] = useState("");
   const [weatherDetails, setWeatherDetails] = useState(null);
-  const [autoRain, setAutoRain] = useState(false);
   const [weatherUpdatedAt, setWeatherUpdatedAt] = useState(null);
-  const [rainMode, setRainMode] = useState("auto");
-  const [manualRain, setManualRain] = useState(false);
+  const [orderNotes, setOrderNotes] = useState("");
+  const [mapMode, setMapMode] = useState("destination");
 
-  useEffect(() => {
-    if (serviceType === "ride") {
-      setMapMode("destination");
+  const isLateCharge = useMemo(() => {
+    const timeMinutes = parseTimeToMinutes(orderTime);
+    return timeMinutes !== null && timeMinutes >= 23 * 60;
+  }, [orderTime]);
+
+  const isRaining = autoRain;
+
+  const distanceKm = useMemo(() => {
+    if (distanceMode === "auto" && routeDistanceKm) {
+      return routeDistanceKm;
     }
-  }, [serviceType]);
+    return distanceKmInput ? Number.parseFloat(distanceKmInput) : null;
+  }, [distanceMode, routeDistanceKm, distanceKmInput]);
+
+  const baseFare = useMemo(() => {
+    if (!distanceKm || distanceKm < 0) return null;
+    if (distanceKm <= BASE_KM) return BASE_FARE;
+    const extraKm = distanceKm - BASE_KM;
+    return BASE_FARE + Math.ceil(extraKm) * EXTRA_PER_KM;
+  }, [distanceKm]);
+
+  const extraStopCount = Math.max(0, pickupPoints.length - 1);
+  const extraStopCharge = extraStopCount * EXTRA_STOP_FEE;
+
+  const lateCharge = isLateCharge ? LATE_CHARGE_FEE : 0;
+
+  const rainCharge = isRaining ? RAIN_CHARGE_FEE : 0;
+
+  const totalFare = useMemo(() => {
+    if (baseFare === null) return null;
+    return baseFare + extraStopCharge + lateCharge + rainCharge;
+  }, [baseFare, extraStopCharge, lateCharge, rainCharge]);
 
   useEffect(() => {
-    if (!destinationQuery.trim()) {
+    if (!destinationQuery || destinationQuery.length < 3) {
       setDestinationResults([]);
       setDestinationError("");
       return;
     }
 
-    if (destination?.label === destinationQuery) {
-      return;
-    }
+    let isCancelled = false;
+    setIsDestinationSearching(true);
+    setDestinationError("");
 
-    const trimmedQuery = destinationQuery.trim();
-    if (trimmedQuery.length < 3) {
-      setDestinationResults([]);
-      return;
-    }
-
-    const handler = setTimeout(async () => {
-      setIsDestinationSearching(true);
-      setDestinationError("");
-
+    const timeoutId = setTimeout(async () => {
       try {
-        const results = await fetchGeocode(trimmedQuery);
-        if (!results.length) {
-          setDestinationError("Lokasi tidak ditemukan. Coba kata kunci lain.");
-          setDestinationResults([]);
-          return;
-        }
+        const results = await fetchGeocode(destinationQuery);
+        if (isCancelled) return;
 
-        setDestinationResults(results.map(buildLocationResult));
-      } catch {
-        setDestinationError("Lokasi tidak ditemukan. Coba kata kunci lain.");
-        setDestinationResults([]);
+        setDestinationResults(
+          results.map((result, index) => ({
+            id: index,
+            label: result.display_name,
+            coords: { lat: Number.parseFloat(result.lat), lng: Number.parseFloat(result.lon) },
+          }))
+        );
+      } catch (error) {
+        if (!isCancelled) {
+          setDestinationError("Lokasi tidak ditemukan.");
+        }
       } finally {
-        setIsDestinationSearching(false);
+        if (!isCancelled) setIsDestinationSearching(false);
       }
     }, 450);
 
-    return () => clearTimeout(handler);
-  }, [destinationQuery, destination]);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [destinationQuery]);
 
-  useEffect(() => {
-    if (!pickupQuery.trim()) {
-      setPickupResults([]);
-      setPickupError("");
-      return;
-    }
-
-    const trimmedQuery = pickupQuery.trim();
-    if (trimmedQuery.length < 3) {
-      setPickupResults([]);
-      return;
-    }
-
-    const handler = setTimeout(async () => {
-      setIsPickupSearching(true);
-      setPickupError("");
-
-      try {
-        const results = await fetchGeocode(trimmedQuery);
-        if (!results.length) {
-          setPickupError("Lokasi tidak ditemukan. Coba kata kunci lain.");
-          setPickupResults([]);
-          return;
-        }
-
-        setPickupResults(results.map(buildLocationResult));
-      } catch {
-        setPickupError("Lokasi tidak ditemukan. Coba kata kunci lain.");
-        setPickupResults([]);
-      } finally {
-        setIsPickupSearching(false);
-      }
-    }, 450);
-
-    return () => clearTimeout(handler);
-  }, [pickupQuery]);
-
-  const selectDestination = useCallback((coords, label = MAP_PICK_LABEL) => {
-    setDestination({ id: label, label, coords });
-    setDestinationQuery(label);
+  const selectDestination = useCallback((coords, label = null) => {
+    setDestination({ coords, label: label || `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` });
+    setDestinationQuery("");
     setDestinationResults([]);
     setDestinationError("");
-    setDistanceMode("auto");
   }, []);
 
-  const addPickupPoint = useCallback((coords, label) => {
-    setPickupPoints((prev) => {
-      const nextIndex = prev.length + 1;
-      const pointLabel = label || `Titik resto ${nextIndex}`;
-      return [
-        ...prev,
-        { id: `${Date.now()}-${nextIndex}`, label: pointLabel, coords },
-      ];
-    });
+  useEffect(() => {
+    if (!pickupQuery || pickupQuery.length < 3) {
+      setPickupResults([]);
+      setPickupError("");
+      return;
+    }
+
+    let isCancelled = false;
+    setIsPickupSearching(true);
+    setPickupError("");
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        const results = await fetchGeocode(pickupQuery);
+        if (isCancelled) return;
+
+        setPickupResults(
+          results.map((result, index) => ({
+            id: index,
+            label: result.display_name,
+            coords: { lat: Number.parseFloat(result.lat), lng: Number.parseFloat(result.lon) },
+          }))
+        );
+      } catch (error) {
+        if (!isCancelled) {
+          setPickupError("Lokasi tidak ditemukan.");
+        }
+      } finally {
+        if (!isCancelled) setIsPickupSearching(false);
+      }
+    }, 450);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [pickupQuery]);
+
+  const addPickupPoint = useCallback((coords, label = null) => {
+    const id = `${Date.now()}-${Math.random()}`;
+    setPickupPoints((prev) => [
+      ...prev,
+      {
+        id,
+        coords,
+        label: label || `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`,
+      },
+    ]);
     setPickupQuery("");
     setPickupResults([]);
     setPickupError("");
@@ -400,53 +408,72 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
     requestWeather();
   }, [requestWeather]);
 
-  const distanceKm = useMemo(() => {
-    const value = Number.parseFloat(distanceKmInput);
-    if (!Number.isFinite(value) || value <= 0) return null;
-    return value;
-  }, [distanceKmInput]);
-
-  const baseFare = useMemo(() => {
-    if (!distanceKm) return null;
-    const extraKm = Math.max(0, distanceKm - BASE_KM);
-    const extraFare = Math.ceil(extraKm) * EXTRA_PER_KM;
-    return BASE_FARE + extraFare;
-  }, [distanceKm]);
-
-  const extraStopCount =
-    serviceType === "food" ? Math.max(0, pickupPoints.length - 1) : 0;
-  const extraStopCharge = extraStopCount * EXTRA_STOP_FEE;
-
-  const orderMinutes = parseTimeToMinutes(orderTime);
-  const lateStartMinutes = parseTimeToMinutes(lateChargeStart);
-  const isLateCharge =
-    orderMinutes !== null &&
-    lateStartMinutes !== null &&
-    orderMinutes >= lateStartMinutes;
-
-  const isRaining = rainMode === "manual" ? manualRain : autoRain;
-  const rainCharge = isRaining ? RAIN_CHARGE_FEE : 0;
-  const lateCharge = isLateCharge ? LATE_CHARGE_FEE : 0;
-
-  const totalFare =
-    baseFare !== null
-      ? baseFare + extraStopCharge + rainCharge + lateCharge
-      : null;
-
-  const orderMessage = useMemo(() => {
-    if (!destination && !distanceKm) return DEFAULT_ORDER_MESSAGE;
-
-    const lines = [];
-    const destinationLabel = destination?.label || destinationQuery || "...";
-
-    lines.push(
-      `Jenis layanan: ${serviceType === "food" ? "Pesan Makanan" : "Ojek"}`
-    );
-    lines.push(`Tujuan antar: ${destinationLabel}`);
+  useEffect(() => {
+    setMapMode(serviceType === "food" ? "pickup" : "destination");
 
     if (serviceType === "food") {
-      if (pickupPoints.length) {
-        lines.push("Titik resto:");
+      setDestination(null);
+      setDestinationQuery("");
+      setDestinationResults([]);
+      setRouteLine(null);
+      setRouteDistanceKm(null);
+      setDistanceKmInput("");
+      setDistanceMode("auto");
+      setRouteError("");
+      return;
+    }
+
+    setPickupPoints([]);
+    setPickupQuery("");
+    setPickupResults([]);
+    setPickupError("");
+    setOrderNotes("");
+  }, [serviceType]);
+
+  const mapPoints = [
+    CAMPUS_COORDS,
+    currentCoords,
+    destination?.coords,
+    ...pickupPoints.map((point) => point.coords),
+  ].filter(Boolean);
+
+  const destinationMarkerHandlers = useMemo(
+    () => ({
+      dragend: (event) => {
+        const { lat, lng } = event.target.getLatLng();
+        selectDestination({ lat, lng });
+      },
+    }),
+    [selectDestination]
+  );
+
+  const mapActionLabel =
+    serviceType === "food" && mapMode === "pickup"
+      ? "Tambah titik resto"
+      : "Set tujuan antar";
+
+  const orderMessage = useMemo(() => {
+    const lines = [];
+
+    if (serviceType === "ride") {
+      lines.push("Ojek");
+    } else if (serviceType === "food") {
+      lines.push("Pesan Makanan");
+    }
+
+    if (currentCoords) {
+      lines.push(
+        `Dari: https://maps.google.com/?q=${currentCoords.lat},${currentCoords.lng}`
+      );
+    } else {
+      lines.push(
+        `Dari: Kampus UINSU Tuntungan (https://maps.google.com/?q=${CAMPUS_COORDS.lat},${CAMPUS_COORDS.lng})`
+      );
+    }
+
+    if (serviceType === "food") {
+      if (pickupPoints.length > 0) {
+        lines.push("Titik Resto:");
         pickupPoints.forEach((point, index) => {
           lines.push(
             `- ${index + 1}. ${point.label} (https://maps.google.com/?q=${point.coords.lat},${point.coords.lng})`
@@ -460,6 +487,8 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
     if (distanceKm) {
       lines.push(`Jarak rute dari kampus: ${distanceKm.toFixed(1)} km.`);
     }
+
+    lines.push(`Waktu booking: ${orderTime}.`);
 
     if (baseFare) {
       lines.push(`Tarif dasar: Rp ${formatRupiah(baseFare)}.`);
@@ -526,32 +555,10 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
     [orderMessage]
   );
 
-  const mapPoints = [
-    CAMPUS_COORDS,
-    currentCoords,
-    destination?.coords,
-    ...pickupPoints.map((point) => point.coords),
-  ].filter(Boolean);
-
-  const destinationMarkerHandlers = useMemo(
-    () => ({
-      dragend: (event) => {
-        const { lat, lng } = event.target.getLatLng();
-        selectDestination({ lat, lng });
-      },
-    }),
-    [selectDestination]
-  );
-
-  const mapActionLabel =
-    serviceType === "food" && mapMode === "pickup"
-      ? "Tambah titik resto"
-      : "Set tujuan antar";
-
   return (
     <section
       id="tarif"
-      className="py-12 sm:py-20 pb-28 sm:pb-20 bg-gradient-to-b from-white via-emerald-50/40 to-white"
+      className="py-12 sm:py-20 pb-32 bg-gradient-to-b from-white via-emerald-50/40 to-white"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-8">
@@ -566,18 +573,135 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="order-2 lg:order-1 bg-white/80 border border-emerald-100 rounded-3xl p-5 sm:p-6 shadow-xl backdrop-blur transition-transform duration-200 active:scale-[0.99]">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+        {/* Full-Width Map Container */}
+        <div className="bg-white/90 border border-emerald-100 rounded-3xl p-4 shadow-xl backdrop-blur mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-gray-500">
+                Peta
+              </p>
+              <p className="text-sm font-semibold text-gray-900">
+                Tap untuk {mapActionLabel.toLowerCase()}.
+              </p>
+            </div>
+            {serviceType === "food" && (
+              <div className="inline-flex items-center bg-gray-100 rounded-full p-1">
+                <button
+                  type="button"
+                  onClick={() => setMapMode("destination")}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                    mapMode === "destination"
+                      ? "bg-emerald-600 text-white"
+                      : "text-gray-600"
+                  }`}
+                >
+                  Set Tujuan
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMapMode("pickup")}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                    mapMode === "pickup"
+                      ? "bg-emerald-600 text-white"
+                      : "text-gray-600"
+                  }`}
+                >
+                  Tambah Resto
+                </button>
+              </div>
+            )}
+          </div>
+
+          <MapContainer
+            center={[DEFAULT_CENTER.lat, DEFAULT_CENTER.lng]}
+            zoom={14}
+            className="h-96 sm:h-[450px] w-full rounded-2xl"
+            scrollWheelZoom={false}
+          >
+            <MapClickHandler
+              onSelect={(latlng) => {
+                if (serviceType === "food" && mapMode === "pickup") {
+                  addPickupPoint({ lat: latlng.lat, lng: latlng.lng });
+                } else {
+                  selectDestination({ lat: latlng.lat, lng: latlng.lng });
+                }
+              }}
+            />
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <Marker position={[CAMPUS_COORDS.lat, CAMPUS_COORDS.lng]}>
+              <Popup>{CAMPUS_QUERY}</Popup>
+            </Marker>
+            {currentCoords && (
+              <Marker position={[currentCoords.lat, currentCoords.lng]}>
+                <Popup>Lokasi Saat Ini</Popup>
+              </Marker>
+            )}
+            {destination?.coords && (
+              <Marker
+                position={[destination.coords.lat, destination.coords.lng]}
+                draggable
+                eventHandlers={destinationMarkerHandlers}
+              >
+                <Popup>{destination.label}</Popup>
+              </Marker>
+            )}
+            {pickupPoints.map((point, index) => (
+              <CircleMarker
+                key={point.id}
+                center={[point.coords.lat, point.coords.lng]}
+                radius={10}
+                pathOptions={{ color: "#2563eb", fillColor: "#2563eb" }}
+              >
+                <Tooltip direction="top" offset={[0, -10]} permanent>
+                  {index + 1}
+                </Tooltip>
+                <Popup>{point.label}</Popup>
+              </CircleMarker>
+            ))}
+            {routeLine && <Polyline positions={routeLine} color="#16a34a" />}
+            {!routeLine && destination?.coords && (
+              <Polyline
+                positions={[
+                  [CAMPUS_COORDS.lat, CAMPUS_COORDS.lng],
+                  [destination.coords.lat, destination.coords.lng],
+                ]}
+                color="#16a34a"
+                dashArray="6 10"
+              />
+            )}
+            {mapPoints.length > 0 && <FitBounds points={mapPoints} />}
+          </MapContainer>
+          <div className="mt-4 text-xs text-gray-500">
+            Tujuan dan resto bisa disetel dari peta atau saran lokasi.
+          </div>
+        </div>
+
+        {/* Collapsible Form Panels */}
+        <div className="space-y-3">
+          {/* Service & Location Panel */}
+          <details className="group rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-all duration-300 open:shadow-lg open:border-emerald-200">
+            <summary className="flex items-center justify-between gap-3 cursor-pointer list-none font-semibold text-gray-900 hover:text-emerald-600 transition">
+              <span className="text-sm">📍 Lokasi & Layanan</span>
+              <span className="transition group-open:rotate-180">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+              </span>
+            </summary>
+
+            <div className="mt-4 space-y-4">
               <div>
-                <p className="text-xs uppercase tracking-wide text-gray-500">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Layanan
-                </p>
-                <div className="inline-flex items-center bg-white border border-gray-200 rounded-full p-1 mt-2">
+                </label>
+                <div className="inline-flex items-center bg-white border border-gray-200 rounded-full p-1">
                   <button
                     type="button"
                     onClick={() => setServiceType("ride")}
-                    className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                    className={`px-4 py-2 rounded-full text-sm font-semibold transition active:scale-95 ${
                       serviceType === "ride"
                         ? "bg-green-600 text-white"
                         : "text-gray-600"
@@ -588,7 +712,7 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                   <button
                     type="button"
                     onClick={() => setServiceType("food")}
-                    className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                    className={`px-4 py-2 rounded-full text-sm font-semibold transition active:scale-95 ${
                       serviceType === "food"
                         ? "bg-green-600 text-white"
                         : "text-gray-600"
@@ -598,101 +722,52 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                   </button>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Lokasi Saya
                 </label>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <button
-                    type="button"
-                    onClick={handleUseCurrentLocation}
-                    className="bg-emerald-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-emerald-700 transition active:scale-[0.98]"
-                  >
-                    {isLocating ? "Mendeteksi..." : "Pakai GPS"}
-                  </button>
-                  <div className="flex-1 rounded-lg bg-white border border-gray-200 px-4 py-3 text-sm text-gray-600">
-                    {currentCoords
-                      ? `${currentCoords.lat.toFixed(4)}, ${currentCoords.lng.toFixed(4)}`
-                      : "Belum dipilih"}
-                  </div>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleUseCurrentLocation}
+                  disabled={isLocating}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition disabled:opacity-50 active:scale-95"
+                >
+                  {isLocating ? "Mengambil lokasi..." : "📍 Ambil Lokasi GPS"}
+                </button>
+                {currentCoords && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    {currentCoords.lat.toFixed(4)}, {currentCoords.lng.toFixed(4)}
+                  </p>
+                )}
               </div>
+            </div>
+          </details>
 
-              {serviceType === "food" && (
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Titik Resto
-                  </label>
-                  <input
-                    type="text"
-                    value={pickupQuery}
-                    onChange={(event) => setPickupQuery(event.target.value)}
-                    placeholder="Cari resto (min 3 huruf)"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                  />
-                  {isPickupSearching && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      Mencari...
-                    </p>
-                  )}
-                  {pickupError && (
-                    <p className="text-xs text-red-600 mt-2">{pickupError}</p>
-                  )}
-                  {pickupResults.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {pickupResults.map((result) => (
-                        <button
-                          key={result.id}
-                          type="button"
-                          onClick={() =>
-                            addPickupPoint(result.coords, result.label)
-                          }
-                          className="w-full text-left bg-white border border-gray-200 rounded-lg p-3 text-sm hover:border-green-500 hover:bg-green-50 transition"
-                        >
-                          {result.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {pickupPoints.length > 0 && (
-                    <div className="mt-4 space-y-2">
-                      {pickupPoints.map((point, index) => (
-                        <div
-                          key={point.id}
-                          className="flex items-center justify-between gap-3 bg-white border border-gray-200 rounded-lg px-4 py-2"
-                        >
-                          <div>
-                            <p className="text-sm font-semibold text-gray-900">
-                              {index + 1}. {point.label}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => removePickupPoint(point.id)}
-                            className="text-xs font-semibold text-red-600 hover:text-red-700"
-                          >
-                            Hapus
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+          {/* Destination Panel */}
+          <details className="group rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-all duration-300 open:shadow-lg open:border-emerald-200">
+            <summary className="flex items-center justify-between gap-3 cursor-pointer list-none font-semibold text-gray-900 hover:text-emerald-600 transition">
+              <span className="text-sm">
+                🎯 Tujuan {destination?.label && `(${destination.label})`}
+              </span>
+              <span className="transition group-open:rotate-180">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+              </span>
+            </summary>
 
+            <div className="mt-4 space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {serviceType === "food" ? "Tujuan Antar" : "Tujuan"}
+                  Tujuan
                 </label>
                 <input
                   type="text"
                   value={destinationQuery}
                   onChange={(event) => setDestinationQuery(event.target.value)}
-                  placeholder="Mau ke..."
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="Cari tujuan..."
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition"
                 />
                 {isDestinationSearching && (
                   <p className="text-xs text-gray-500 mt-2">
@@ -713,7 +788,7 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                         onClick={() =>
                           selectDestination(result.coords, result.label)
                         }
-                        className="w-full text-left bg-white border border-gray-200 rounded-lg p-3 text-sm hover:border-green-500 hover:bg-green-50 transition"
+                        className="w-full text-left bg-white border border-gray-200 rounded-lg p-3 text-sm hover:border-green-500 hover:bg-green-50 transition active:scale-95"
                       >
                         {result.label}
                       </button>
@@ -744,7 +819,7 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                     }}
                     placeholder="Terisi otomatis dari rute"
                     readOnly={distanceMode === "auto" && !!routeDistanceKm}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition"
                   />
                   {distanceMode === "auto" && routeDistanceKm && (
                     <button
@@ -753,7 +828,7 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                         setDistanceMode("manual");
                         setRouteDistanceKm(null);
                       }}
-                      className="text-sm font-semibold text-gray-600 border border-gray-300 rounded-lg px-4 py-3 hover:bg-gray-100"
+                      className="text-sm font-semibold text-gray-600 border border-gray-300 rounded-lg px-4 py-3 hover:bg-gray-100 transition active:scale-95"
                     >
                       Manual
                     </button>
@@ -768,339 +843,276 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                   </p>
                 )}
               </div>
+            </div>
+          </details>
 
-              <details className="rounded-2xl border border-gray-200 bg-white p-4">
-                <summary className="flex items-center justify-between gap-3 cursor-pointer list-none">
-                  <span className="text-sm font-semibold text-gray-900">
-                    Pengaturan charge
+          {/* Food Pickups Panel */}
+          {serviceType === "food" && (
+            <details className="group rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-all duration-300 open:shadow-lg open:border-emerald-200">
+              <summary className="flex items-center justify-between gap-3 cursor-pointer list-none font-semibold text-gray-900 hover:text-emerald-600 transition">
+                <span className="text-sm">
+                  🍜 Resto {pickupPoints.length > 0 && `(${pickupPoints.length})`}
+                </span>
+                <span className="transition group-open:rotate-180">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </span>
+              </summary>
+
+              <div className="mt-4 space-y-4">
+                <input
+                  type="text"
+                  value={pickupQuery}
+                  onChange={(event) => setPickupQuery(event.target.value)}
+                  placeholder="Cari resto..."
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+                />
+                {isPickupSearching && (
+                  <p className="text-xs text-gray-500">
+                    Mencari...
+                  </p>
+                )}
+                {pickupError && (
+                  <p className="text-xs text-red-600">{pickupError}</p>
+                )}
+                {pickupResults.length > 0 && (
+                  <div className="space-y-2">
+                    {pickupResults.map((result) => (
+                      <button
+                        key={result.id}
+                        type="button"
+                        onClick={() =>
+                          addPickupPoint(result.coords, result.label)
+                        }
+                        className="w-full text-left bg-white border border-gray-200 rounded-lg p-3 text-sm hover:border-green-500 hover:bg-green-50 transition active:scale-95"
+                      >
+                        {result.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {pickupPoints.length > 0 && (
+                  <div className="space-y-2 pt-2 border-t border-gray-100">
+                    {pickupPoints.map((point, index) => (
+                      <div
+                        key={point.id}
+                        className="flex items-center justify-between gap-3 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-sm"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900">
+                            {index + 1}. {point.label}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removePickupPoint(point.id)}
+                          className="text-xs font-semibold text-red-600 hover:text-red-700 transition"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </details>
+          )}
+
+          {/* Settings Panel */}
+          <details className="group rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-all duration-300 open:shadow-lg open:border-emerald-200">
+            <summary className="flex items-center justify-between gap-3 cursor-pointer list-none font-semibold text-gray-900 hover:text-emerald-600 transition">
+              <span className="text-sm">⚙️ Pengaturan Charge</span>
+              <span className="transition group-open:rotate-180">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+              </span>
+            </summary>
+
+            <div className="mt-4 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Waktu Booking
+                  </label>
+                  <input
+                    type="time"
+                    value={orderTime}
+                    onChange={(event) => setOrderTime(event.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Charge Rp 2.000 kalau booking di jam &gt;= 23:00.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Cuaca
+                  </label>
+                  <button
+                    type="button"
+                    onClick={requestWeather}
+                    disabled={isWeatherLoading}
+                    className="w-full rounded-lg bg-blue-50 border border-blue-300 px-4 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition disabled:opacity-50 active:scale-95"
+                  >
+                    {isWeatherLoading ? "Ambil cuaca..." : "🌡️ Ambil Cuaca"}
+                  </button>
+                  {weatherDetails && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      {weatherDetails.sourceLabel}: {weatherDetails.precipitation}mm, kode {weatherDetails.weatherCode}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {weatherError && (
+                <p className="text-xs text-amber-600">{weatherError}</p>
+              )}
+
+              <div className="space-y-3 pt-2 border-t border-gray-100">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isLateCharge}
+                    disabled
+                    className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
+                  />
+                  <span className="text-sm font-semibold text-gray-700">
+                    Charge Waktu (Rp 2.000)
                   </span>
-                  <div className="flex items-center gap-2 text-xs">
-                    <span
-                      className={`px-2 py-1 rounded-full ${
-                        isLateCharge
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-gray-100 text-gray-500"
-                      }`}
-                    >
-                      Waktu {isLateCharge ? "On" : "Off"}
+                  <span
+                    className={`ml-auto px-2 py-1 rounded-full text-xs font-semibold ${
+                      isLateCharge
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-gray-100 text-gray-500"
+                    }`}
+                  >
+                    {isLateCharge ? "On" : "Off"}
+                  </span>
+                </label>
+
+                {weatherDetails && (
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isRaining}
+                      disabled
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                    <span className="text-sm font-semibold text-gray-700">
+                      Charge Hujan (Rp 1.000)
                     </span>
                     <span
-                      className={`px-2 py-1 rounded-full ${
+                      className={`ml-auto px-2 py-1 rounded-full text-xs font-semibold ${
                         isRaining
                           ? "bg-blue-100 text-blue-700"
                           : "bg-gray-100 text-gray-500"
                       }`}
                     >
-                      Hujan {isRaining ? "On" : "Off"}
+                      {isRaining ? "On" : "Off"}
                     </span>
-                  </div>
-                </summary>
-
-                <div className="mt-4 space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-gray-500">
-                        Jam Order
-                      </p>
-                      <input
-                        type="time"
-                        value={orderTime}
-                        onChange={(event) => setOrderTime(event.target.value)}
-                        className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-gray-500">
-                        Charge Mulai
-                      </p>
-                      <input
-                        type="time"
-                        value={lateChargeStart}
-                        onChange={(event) =>
-                          setLateChargeStart(event.target.value)
-                        }
-                        className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-gray-500">
-                          Cuaca
-                        </p>
-                        <p className="text-sm font-semibold text-gray-900 mt-1">
-                          {isRaining ? "Hujan deras" : "Aman"}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {weatherUpdatedAt
-                            ? `Update ${weatherUpdatedAt.toLocaleTimeString(
-                                "id-ID",
-                                { hour: "2-digit", minute: "2-digit" }
-                              )}`
-                            : "Belum ada data"}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={requestWeather}
-                        className="text-xs font-semibold text-blue-600 hover:text-blue-700"
-                      >
-                        {isWeatherLoading ? "Memuat..." : "Perbarui"}
-                      </button>
-                    </div>
-
-                    {weatherDetails && (
-                      <details className="mt-3 text-xs text-gray-500">
-                        <summary className="cursor-pointer">Detail cuaca</summary>
-                        <div className="mt-2 space-y-1">
-                          <p>
-                            Curah hujan: {weatherDetails.precipitation.toFixed(2)}
-                            {" "}mm/jam
-                          </p>
-                          <p>
-                            Kode cuaca: {Number.isFinite(weatherDetails.weatherCode)
-                              ? weatherDetails.weatherCode
-                              : "-"}
-                          </p>
-                          <p>
-                            Charge hujan aktif jika &gt;= {RAIN_PRECIPITATION_THRESHOLD}
-                            {" "}mm/jam atau kode hujan deras.
-                          </p>
-                        </div>
-                      </details>
-                    )}
-
-                    {weatherError && (
-                      <p className="text-xs text-amber-600 mt-2">
-                        {weatherError}
-                      </p>
-                    )}
-
-                    <div className="mt-3 flex flex-wrap items-center gap-3">
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input
-                          type="checkbox"
-                          checked={rainMode === "manual"}
-                          onChange={(event) =>
-                            setRainMode(event.target.checked ? "manual" : "auto")
-                          }
-                          className="h-4 w-4"
-                        />
-                        Manual
-                      </label>
-                      {rainMode === "manual" && (
-                        <label className="flex items-center gap-2 text-sm text-gray-700">
-                          <input
-                            type="checkbox"
-                            checked={manualRain}
-                            onChange={(event) =>
-                              setManualRain(event.target.checked)
-                            }
-                            className="h-4 w-4"
-                          />
-                          Hujan sekarang
-                        </label>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </details>
-
-              {serviceType === "food" && (
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Catatan
                   </label>
-                  <textarea
-                    value={orderNotes}
-                    onChange={(event) => setOrderNotes(event.target.value)}
-                    placeholder="Contoh: ayam geprek lvl 2, teh manis"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                    rows={3}
-                  ></textarea>
-                </div>
-              )}
+                )}
+              </div>
+            </div>
+          </details>
 
-              <div className="bg-gradient-to-br from-emerald-50 to-white border border-emerald-200 rounded-2xl p-4 shadow-sm">
-                <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold mb-2">
-                  Ringkas
-                </p>
-                <div className="space-y-2 text-sm text-gray-700">
-                  <div className="flex items-center justify-between">
-                    <span>Tarif dasar</span>
-                    <span className="font-semibold">
-                      {baseFare ? `Rp ${formatRupiah(baseFare)}` : "-"}
-                    </span>
-                  </div>
-                  {serviceType === "food" && (
-                    <div className="flex items-center justify-between">
-                      <span>
-                        Tambahan titik resto ({extraStopCount}x)
-                      </span>
-                      <span className="font-semibold">
-                        Rp {formatRupiah(extraStopCharge)}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <span>Charge waktu</span>
-                    <span className="font-semibold">
-                      {lateCharge > 0 ? `Rp ${formatRupiah(lateCharge)}` : "-"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Charge hujan</span>
-                    <span className="font-semibold">
-                      {rainCharge > 0 ? `Rp ${formatRupiah(rainCharge)}` : "-"}
-                    </span>
-                  </div>
-                </div>
-                <div className="mt-4 border-t border-emerald-100 pt-4 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-gray-700">Total</span>
-                  <span className="text-2xl font-bold text-emerald-700">
-                    {totalFare !== null ? `Rp ${formatRupiah(totalFare)}` : "-"}
+          {/* Notes Panel */}
+          {serviceType === "food" && (
+            <details className="group rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-all duration-300 open:shadow-lg open:border-emerald-200">
+              <summary className="flex items-center justify-between gap-3 cursor-pointer list-none font-semibold text-gray-900 hover:text-emerald-600 transition">
+                <span className="text-sm">📝 Catatan</span>
+                <span className="transition group-open:rotate-180">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </span>
+              </summary>
+
+              <div className="mt-4">
+                <textarea
+                  value={orderNotes}
+                  onChange={(event) => setOrderNotes(event.target.value)}
+                  placeholder="Contoh: ayam geprek lvl 2, teh manis"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+                  rows={3}
+                ></textarea>
+              </div>
+            </details>
+          )}
+
+          {/* Summary Panel */}
+          <details open className="group rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-4 shadow-md transition-all duration-300 open:shadow-lg">
+            <summary className="flex items-center justify-between gap-3 cursor-pointer list-none font-semibold text-gray-900 hover:text-emerald-600 transition">
+              <span className="text-sm">💰 Ringkas Harga</span>
+              <span className="transition group-open:rotate-180">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+              </span>
+            </summary>
+
+            <div className="mt-4 space-y-3 text-sm text-gray-700">
+              <div className="flex items-center justify-between">
+                <span>Tarif dasar</span>
+                <span className="font-semibold">
+                  {baseFare ? `Rp ${formatRupiah(baseFare)}` : "-"}
+                </span>
+              </div>
+              {serviceType === "food" && (
+                <div className="flex items-center justify-between">
+                  <span>
+                    Tambahan titik resto ({extraStopCount}x)
+                  </span>
+                  <span className="font-semibold">
+                    Rp {formatRupiah(extraStopCharge)}
                   </span>
                 </div>
+              )}
+              <div className="flex items-center justify-between">
+                <span>Charge waktu</span>
+                <span className="font-semibold">
+                  {lateCharge > 0 ? `Rp ${formatRupiah(lateCharge)}` : "-"}
+                </span>
               </div>
-
-              <a
-                href={whatsappLink}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-emerald-700 transition shadow-lg"
-              >
-                Lanjut ke WhatsApp
-              </a>
-            </div>
-          </div>
-
-          <div className="order-1 lg:order-2 bg-white/90 border border-emerald-100 rounded-3xl p-4 shadow-xl backdrop-blur transition-transform duration-200 active:scale-[0.99]">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-gray-500">
-                  Peta
-                </p>
-                <p className="text-sm font-semibold text-gray-900">
-                  Tap untuk {mapActionLabel.toLowerCase()}.
-                </p>
+              <div className="flex items-center justify-between">
+                <span>Charge hujan</span>
+                <span className="font-semibold">
+                  {rainCharge > 0 ? `Rp ${formatRupiah(rainCharge)}` : "-"}
+                </span>
               </div>
-              {serviceType === "food" && (
-                <div className="inline-flex items-center bg-gray-100 rounded-full p-1">
-                  <button
-                    type="button"
-                    onClick={() => setMapMode("destination")}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
-                      mapMode === "destination"
-                        ? "bg-emerald-600 text-white"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    Set Tujuan
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMapMode("pickup")}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
-                      mapMode === "pickup"
-                        ? "bg-emerald-600 text-white"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    Tambah Resto
-                  </button>
-                </div>
-              )}
+              <div className="mt-3 pt-3 border-t border-emerald-200 flex items-center justify-between">
+                <span className="font-semibold text-gray-900">Total Estimasi</span>
+                <span className="text-2xl font-bold text-emerald-700">
+                  {totalFare !== null ? `Rp ${formatRupiah(totalFare)}` : "-"}
+                </span>
+              </div>
             </div>
-
-              <MapContainer
-              center={[DEFAULT_CENTER.lat, DEFAULT_CENTER.lng]}
-              zoom={14}
-              className="h-[320px] sm:h-96 w-full rounded-2xl"
-              scrollWheelZoom={false}
-            >
-              <MapClickHandler
-                onSelect={(latlng) => {
-                  if (serviceType === "food" && mapMode === "pickup") {
-                    addPickupPoint({ lat: latlng.lat, lng: latlng.lng });
-                  } else {
-                    selectDestination({ lat: latlng.lat, lng: latlng.lng });
-                  }
-                }}
-              />
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <Marker position={[CAMPUS_COORDS.lat, CAMPUS_COORDS.lng]}>
-                <Popup>{CAMPUS_QUERY}</Popup>
-              </Marker>
-              {currentCoords && (
-                <Marker position={[currentCoords.lat, currentCoords.lng]}>
-                  <Popup>Lokasi Saat Ini</Popup>
-                </Marker>
-              )}
-              {destination?.coords && (
-                <Marker
-                  position={[destination.coords.lat, destination.coords.lng]}
-                  draggable
-                  eventHandlers={destinationMarkerHandlers}
-                >
-                  <Popup>{destination.label}</Popup>
-                </Marker>
-              )}
-              {pickupPoints.map((point, index) => (
-                <CircleMarker
-                  key={point.id}
-                  center={[point.coords.lat, point.coords.lng]}
-                  radius={10}
-                  pathOptions={{ color: "#2563eb", fillColor: "#2563eb" }}
-                >
-                  <Tooltip direction="top" offset={[0, -10]} permanent>
-                    {index + 1}
-                  </Tooltip>
-                  <Popup>{point.label}</Popup>
-                </CircleMarker>
-              ))}
-              {routeLine && <Polyline positions={routeLine} color="#16a34a" />}
-              {!routeLine && destination?.coords && (
-                <Polyline
-                  positions={[
-                    [CAMPUS_COORDS.lat, CAMPUS_COORDS.lng],
-                    [destination.coords.lat, destination.coords.lng],
-                  ]}
-                  color="#16a34a"
-                  dashArray="6 10"
-                />
-              )}
-              {mapPoints.length > 0 && <FitBounds points={mapPoints} />}
-            </MapContainer>
-            <div className="mt-4 text-xs text-gray-500">
-              Tujuan dan resto bisa disetel dari peta atau saran lokasi.
-            </div>
-          </div>
+          </details>
         </div>
+      </div>
 
-        <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-4 lg:hidden pointer-events-none">
-          <div className="pointer-events-auto mx-auto max-w-7xl rounded-2xl border border-emerald-200 bg-white/95 shadow-2xl backdrop-blur px-4 py-3 flex items-center gap-3">
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] uppercase tracking-wide text-gray-500">
-                Total
-              </p>
-              <p className="truncate text-lg font-bold text-emerald-700">
-                {totalFare !== null ? `Rp ${formatRupiah(totalFare)}` : "-"}
-              </p>
-            </div>
-            <a
-              href={whatsappLink}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition active:scale-[0.98]"
-            >
-              Chat
-            </a>
+      {/* Sticky Bottom CTA Bar */}
+      <div className="fixed inset-x-0 bottom-0 z-50 px-4 py-3 pointer-events-none">
+        <div className="pointer-events-auto mx-auto max-w-7xl rounded-2xl border border-emerald-200 bg-white/95 shadow-2xl backdrop-blur flex items-center gap-3 p-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold">
+              Total Estimasi
+            </p>
+            <p className="text-xl font-bold text-emerald-700">
+              {totalFare !== null ? `Rp ${formatRupiah(totalFare)}` : "-"}
+            </p>
           </div>
+          <a
+            href={whatsappLink}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 text-white px-5 py-3 text-sm font-semibold shadow-lg transition active:scale-[0.95] hover:bg-emerald-700 whitespace-nowrap"
+          >
+            Lanjut ke WA
+          </a>
         </div>
       </div>
     </section>
