@@ -3,8 +3,8 @@ export const admins = [
   {
     name: "Admin 1",
     schedule: "07:00 - 13:00",
-    phone: "628388613541",
-    displayPhone: "0838-8613-541",
+    phone: "6282279019789",
+    displayPhone: "0822-7901-9789",
   },
   {
     name: "Admin 2",
