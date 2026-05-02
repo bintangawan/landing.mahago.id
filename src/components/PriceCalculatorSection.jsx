@@ -233,7 +233,7 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
         }
 
         setDestinationResults(results.map(buildLocationResult));
-      } catch (error) {
+      } catch {
         setDestinationError("Lokasi tidak ditemukan. Coba kata kunci lain.");
         setDestinationResults([]);
       } finally {
@@ -270,7 +270,7 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
         }
 
         setPickupResults(results.map(buildLocationResult));
-      } catch (error) {
+      } catch {
         setPickupError("Lokasi tidak ditemukan. Coba kata kunci lain.");
         setPickupResults([]);
       } finally {
@@ -351,7 +351,7 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
         setRouteDistanceKm(route.distanceKm);
         setDistanceKmInput(route.distanceKm.toFixed(1));
         setDistanceMode("auto");
-      } catch (error) {
+      } catch {
         if (isCancelled) return;
         setRouteLine(null);
         setRouteDistanceKm(null);
@@ -549,23 +549,29 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
       : "Set tujuan antar";
 
   return (
-    <section id="tarif" className="py-12 sm:py-20 bg-white">
+    <section
+      id="tarif"
+      className="py-12 sm:py-20 pb-28 sm:pb-20 bg-gradient-to-b from-white via-emerald-50/40 to-white"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="text-center mb-10">
+        <div className="text-center mb-8">
+          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/80 px-3 py-1 text-xs font-semibold text-emerald-700 shadow-sm">
+            Estimasi cepat
+          </span>
           <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
-            Kalkulator Tarif <span className="text-green-600">MahaGo</span>
+            Kalkulator Tarif <span className="text-emerald-600">MahaGo</span>
           </h3>
-          <p className="text-gray-600 text-sm sm:text-base">
-            Hitung estimasi harga berdasarkan argo Kampus UINSU Tuntungan.
+          <p className="text-gray-500 text-sm sm:text-base">
+            Dari kampus ke tujuan, instan.
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-6 sm:p-8 shadow-lg">
+          <div className="order-2 lg:order-1 bg-white/80 border border-emerald-100 rounded-3xl p-5 sm:p-6 shadow-xl backdrop-blur transition-transform duration-200 active:scale-[0.99]">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
               <div>
                 <p className="text-xs uppercase tracking-wide text-gray-500">
-                  Jenis Layanan
+                  Layanan
                 </p>
                 <div className="inline-flex items-center bg-white border border-gray-200 rounded-full p-1 mt-2">
                   <button
@@ -592,27 +598,24 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                   </button>
                 </div>
               </div>
-              <div className="text-xs text-gray-500">
-                Tarif dihitung dari kampus ke tujuan.
-              </div>
             </div>
 
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Lokasi Saat Ini
+                  Lokasi Saya
                 </label>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     type="button"
                     onClick={handleUseCurrentLocation}
-                    className="bg-green-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-green-700 transition"
+                    className="bg-emerald-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-emerald-700 transition active:scale-[0.98]"
                   >
-                    {isLocating ? "Mendeteksi..." : "Gunakan Lokasi Saya"}
+                    {isLocating ? "Mendeteksi..." : "Pakai GPS"}
                   </button>
                   <div className="flex-1 rounded-lg bg-white border border-gray-200 px-4 py-3 text-sm text-gray-600">
                     {currentCoords
-                      ? `Lat: ${currentCoords.lat.toFixed(5)}, Lng: ${currentCoords.lng.toFixed(5)}`
+                      ? `${currentCoords.lat.toFixed(4)}, ${currentCoords.lng.toFixed(4)}`
                       : "Belum dipilih"}
                   </div>
                 </div>
@@ -621,18 +624,18 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
               {serviceType === "food" && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Titik Restoran
+                    Titik Resto
                   </label>
                   <input
                     type="text"
                     value={pickupQuery}
                     onChange={(event) => setPickupQuery(event.target.value)}
-                    placeholder="Cari lokasi resto (min 3 huruf)"
+                    placeholder="Cari resto (min 3 huruf)"
                     className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                   {isPickupSearching && (
                     <p className="text-xs text-gray-500 mt-2">
-                      Mencari saran lokasi...
+                      Mencari...
                     </p>
                   )}
                   {pickupError && (
@@ -654,11 +657,6 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                       ))}
                     </div>
                   )}
-                  <p className="text-xs text-gray-500 mt-2">
-                    Tambahkan beberapa titik jika pesan dari lebih dari satu
-                    resto.
-                  </p>
-
                   {pickupPoints.length > 0 && (
                     <div className="mt-4 space-y-2">
                       {pickupPoints.map((point, index) => (
@@ -669,10 +667,6 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                           <div>
                             <p className="text-sm font-semibold text-gray-900">
                               {index + 1}. {point.label}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {point.coords.lat.toFixed(4)},{" "}
-                              {point.coords.lng.toFixed(4)}
                             </p>
                           </div>
                           <button
@@ -691,9 +685,7 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {serviceType === "food"
-                    ? "Tujuan Antar"
-                    : "Lokasi Tujuan"}
+                  {serviceType === "food" ? "Tujuan Antar" : "Tujuan"}
                 </label>
                 <input
                   type="text"
@@ -704,7 +696,7 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                 />
                 {isDestinationSearching && (
                   <p className="text-xs text-gray-500 mt-2">
-                    Mencari saran lokasi...
+                    Mencari...
                   </p>
                 )}
                 {destinationError && (
@@ -729,7 +721,7 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                   </div>
                 )}
                 <p className="text-xs text-gray-500 mt-2">
-                  Ketik minimal 3 huruf untuk saran lokasi. Bisa juga klik peta.
+                  Min 3 huruf atau tap peta.
                 </p>
                 {routeError && (
                   <p className="text-xs text-amber-600 mt-2">{routeError}</p>
@@ -738,7 +730,7 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Jarak dari Kampus UINSU Tuntungan (km)
+                  Jarak (km)
                 </label>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input
@@ -763,144 +755,177 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                       }}
                       className="text-sm font-semibold text-gray-600 border border-gray-300 rounded-lg px-4 py-3 hover:bg-gray-100"
                     >
-                      Edit Manual
+                      Manual
                     </button>
                   )}
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  3 km pertama Rp 5.000, berikutnya Rp 2.000 per km (dibulatkan
-                  ke atas).
+                  Dari kampus via rute. 3 km pertama Rp 5.000, +Rp 2.000/km.
                 </p>
                 {isRouting && (
                   <p className="text-xs text-gray-500 mt-2">
-                    Mengambil jarak rute...
+                    Ambil rute...
                   </p>
                 )}
               </div>
 
-              <div className="bg-white border-2 border-green-100 rounded-xl p-4">
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="flex-1">
-                    <p className="text-xs uppercase tracking-wide text-gray-500">
-                      Jam Order
-                    </p>
-                    <input
-                      type="time"
-                      value={orderTime}
-                      onChange={(event) => setOrderTime(event.target.value)}
-                      className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm"
-                    />
+              <details className="rounded-2xl border border-gray-200 bg-white p-4">
+                <summary className="flex items-center justify-between gap-3 cursor-pointer list-none">
+                  <span className="text-sm font-semibold text-gray-900">
+                    Pengaturan charge
+                  </span>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span
+                      className={`px-2 py-1 rounded-full ${
+                        isLateCharge
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-gray-100 text-gray-500"
+                      }`}
+                    >
+                      Waktu {isLateCharge ? "On" : "Off"}
+                    </span>
+                    <span
+                      className={`px-2 py-1 rounded-full ${
+                        isRaining
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-gray-100 text-gray-500"
+                      }`}
+                    >
+                      Hujan {isRaining ? "On" : "Off"}
+                    </span>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-xs uppercase tracking-wide text-gray-500">
-                      Mulai Charge Jam
-                    </p>
-                    <input
-                      type="time"
-                      value={lateChargeStart}
-                      onChange={(event) => setLateChargeStart(event.target.value)}
-                      className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm"
-                    />
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500 mt-3">
-                  Jika jam order melewati batas, charge waktu Rp 2.000 otomatis
-                  aktif.
-                </p>
-              </div>
+                </summary>
 
-              <div className="bg-white border-2 border-blue-100 rounded-xl p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-gray-500">
-                      Status Cuaca
-                    </p>
-                    <p className="text-sm font-semibold text-gray-900 mt-1">
-                      {isRaining ? "Hujan terdeteksi" : "Tidak hujan"}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {weatherUpdatedAt
-                        ? `Diperbarui ${weatherUpdatedAt.toLocaleTimeString(
-                            "id-ID",
-                            { hour: "2-digit", minute: "2-digit" }
-                          )}`
-                        : "Belum ada data"}
-                    </p>
-                    {weatherDetails && (
-                      <div className="mt-2 text-xs text-gray-500 space-y-1">
-                        <p>
-                          Curah hujan: {weatherDetails.precipitation.toFixed(2)}
-                          {" "}mm/jam
+                <div className="mt-4 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-gray-500">
+                        Jam Order
+                      </p>
+                      <input
+                        type="time"
+                        value={orderTime}
+                        onChange={(event) => setOrderTime(event.target.value)}
+                        className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-gray-500">
+                        Charge Mulai
+                      </p>
+                      <input
+                        type="time"
+                        value={lateChargeStart}
+                        onChange={(event) =>
+                          setLateChargeStart(event.target.value)
+                        }
+                        className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-gray-500">
+                          Cuaca
                         </p>
-                        <p>
-                          Kode cuaca: {Number.isFinite(weatherDetails.weatherCode)
-                            ? weatherDetails.weatherCode
-                            : "-"}
+                        <p className="text-sm font-semibold text-gray-900 mt-1">
+                          {isRaining ? "Hujan deras" : "Aman"}
                         </p>
-                        <p>
-                          Charge hujan aktif jika >= {RAIN_PRECIPITATION_THRESHOLD}
-                          {" "}mm/jam atau kode hujan deras.
+                        <p className="text-xs text-gray-500 mt-1">
+                          {weatherUpdatedAt
+                            ? `Update ${weatherUpdatedAt.toLocaleTimeString(
+                                "id-ID",
+                                { hour: "2-digit", minute: "2-digit" }
+                              )}`
+                            : "Belum ada data"}
                         </p>
                       </div>
+                      <button
+                        type="button"
+                        onClick={requestWeather}
+                        className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+                      >
+                        {isWeatherLoading ? "Memuat..." : "Perbarui"}
+                      </button>
+                    </div>
+
+                    {weatherDetails && (
+                      <details className="mt-3 text-xs text-gray-500">
+                        <summary className="cursor-pointer">Detail cuaca</summary>
+                        <div className="mt-2 space-y-1">
+                          <p>
+                            Curah hujan: {weatherDetails.precipitation.toFixed(2)}
+                            {" "}mm/jam
+                          </p>
+                          <p>
+                            Kode cuaca: {Number.isFinite(weatherDetails.weatherCode)
+                              ? weatherDetails.weatherCode
+                              : "-"}
+                          </p>
+                          <p>
+                            Charge hujan aktif jika &gt;= {RAIN_PRECIPITATION_THRESHOLD}
+                            {" "}mm/jam atau kode hujan deras.
+                          </p>
+                        </div>
+                      </details>
                     )}
+
                     {weatherError && (
                       <p className="text-xs text-amber-600 mt-2">
                         {weatherError}
                       </p>
                     )}
+
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={rainMode === "manual"}
+                          onChange={(event) =>
+                            setRainMode(event.target.checked ? "manual" : "auto")
+                          }
+                          className="h-4 w-4"
+                        />
+                        Manual
+                      </label>
+                      {rainMode === "manual" && (
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input
+                            type="checkbox"
+                            checked={manualRain}
+                            onChange={(event) =>
+                              setManualRain(event.target.checked)
+                            }
+                            className="h-4 w-4"
+                          />
+                          Hujan sekarang
+                        </label>
+                      )}
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={requestWeather}
-                    className="text-xs font-semibold text-blue-600 hover:text-blue-700"
-                  >
-                    {isWeatherLoading ? "Memuat..." : "Perbarui"}
-                  </button>
                 </div>
-                <div className="mt-4 flex items-center gap-3">
-                  <label className="flex items-center gap-2 text-sm text-gray-700">
-                    <input
-                      type="checkbox"
-                      checked={rainMode === "manual"}
-                      onChange={(event) =>
-                        setRainMode(event.target.checked ? "manual" : "auto")
-                      }
-                      className="h-4 w-4"
-                    />
-                    Atur hujan manual
-                  </label>
-                  {rainMode === "manual" && (
-                    <label className="flex items-center gap-2 text-sm text-gray-700">
-                      <input
-                        type="checkbox"
-                        checked={manualRain}
-                        onChange={(event) => setManualRain(event.target.checked)}
-                        className="h-4 w-4"
-                      />
-                      Hujan sekarang
-                    </label>
-                  )}
-                </div>
-              </div>
+              </details>
 
               {serviceType === "food" && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Catatan Pesanan
+                    Catatan
                   </label>
                   <textarea
                     value={orderNotes}
                     onChange={(event) => setOrderNotes(event.target.value)}
-                    placeholder="Contoh: Ayam geprek level 2, teh manis, tanpa sambal"
+                    placeholder="Contoh: ayam geprek lvl 2, teh manis"
                     className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                     rows={3}
                   ></textarea>
                 </div>
               )}
 
-              <div className="bg-white border-2 border-green-200 rounded-xl p-4">
-                <p className="text-xs uppercase tracking-wide text-green-700 font-semibold mb-2">
-                  Ringkasan Tarif
+              <div className="bg-gradient-to-br from-emerald-50 to-white border border-emerald-200 rounded-2xl p-4 shadow-sm">
+                <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold mb-2">
+                  Ringkas
                 </p>
                 <div className="space-y-2 text-sm text-gray-700">
                   <div className="flex items-center justify-between">
@@ -932,11 +957,9 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                     </span>
                   </div>
                 </div>
-                <div className="mt-4 border-t border-gray-200 pt-4 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-gray-700">
-                    Total Estimasi
-                  </span>
-                  <span className="text-2xl font-bold text-gray-900">
+                <div className="mt-4 border-t border-emerald-100 pt-4 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-700">Total</span>
+                  <span className="text-2xl font-bold text-emerald-700">
                     {totalFare !== null ? `Rp ${formatRupiah(totalFare)}` : "-"}
                   </span>
                 </div>
@@ -946,21 +969,21 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                 href={whatsappLink}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition shadow-lg"
+                className="inline-flex items-center justify-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-emerald-700 transition shadow-lg"
               >
-                Chat Admin dengan Detail Ini
+                Lanjut ke WhatsApp
               </a>
             </div>
           </div>
 
-          <div className="bg-white border-2 border-gray-200 rounded-2xl p-4 shadow-lg">
+          <div className="order-1 lg:order-2 bg-white/90 border border-emerald-100 rounded-3xl p-4 shadow-xl backdrop-blur transition-transform duration-200 active:scale-[0.99]">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
               <div>
                 <p className="text-xs uppercase tracking-wide text-gray-500">
-                  Interaksi Peta
+                  Peta
                 </p>
                 <p className="text-sm font-semibold text-gray-900">
-                  Klik peta untuk {mapActionLabel.toLowerCase()}.
+                  Tap untuk {mapActionLabel.toLowerCase()}.
                 </p>
               </div>
               {serviceType === "food" && (
@@ -970,7 +993,7 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                     onClick={() => setMapMode("destination")}
                     className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
                       mapMode === "destination"
-                        ? "bg-green-600 text-white"
+                        ? "bg-emerald-600 text-white"
                         : "text-gray-600"
                     }`}
                   >
@@ -981,7 +1004,7 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                     onClick={() => setMapMode("pickup")}
                     className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
                       mapMode === "pickup"
-                        ? "bg-green-600 text-white"
+                        ? "bg-emerald-600 text-white"
                         : "text-gray-600"
                     }`}
                   >
@@ -991,10 +1014,10 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
               )}
             </div>
 
-            <MapContainer
+              <MapContainer
               center={[DEFAULT_CENTER.lat, DEFAULT_CENTER.lng]}
               zoom={14}
-              className="h-80 sm:h-96 w-full rounded-xl"
+              className="h-[320px] sm:h-96 w-full rounded-2xl"
               scrollWheelZoom={false}
             >
               <MapClickHandler
@@ -1054,9 +1077,29 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
               {mapPoints.length > 0 && <FitBounds points={mapPoints} />}
             </MapContainer>
             <div className="mt-4 text-xs text-gray-500">
-              Peta menggunakan OpenStreetMap. Tujuan dan resto bisa disetel dari
-              peta atau saran lokasi.
+              Tujuan dan resto bisa disetel dari peta atau saran lokasi.
             </div>
+          </div>
+        </div>
+
+        <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-4 lg:hidden pointer-events-none">
+          <div className="pointer-events-auto mx-auto max-w-7xl rounded-2xl border border-emerald-200 bg-white/95 shadow-2xl backdrop-blur px-4 py-3 flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] uppercase tracking-wide text-gray-500">
+                Total
+              </p>
+              <p className="truncate text-lg font-bold text-emerald-700">
+                {totalFare !== null ? `Rp ${formatRupiah(totalFare)}` : "-"}
+              </p>
+            </div>
+            <a
+              href={whatsappLink}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition active:scale-[0.98]"
+            >
+              Chat
+            </a>
           </div>
         </div>
       </div>
