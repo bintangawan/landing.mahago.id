@@ -1,37 +1,259 @@
+@import "@fontsource-variable/dm-sans/wght.css";
+@import "@fontsource-variable/work-sans/wght.css";
 @import "tailwindcss";
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap");
+
+/*
+ * Design token MahaGo (Figma "MahaGo app v1.0.1" → Main Colors).
+ * Nama token Figma ditulis di komentar supaya gampang dicocokkan.
+ */
+@theme {
+  --font-sans: "Work Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "DM Sans Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --color-mg-green: #0f8c3c; /* foreground */
+  --color-mg-green-deep: #0f7846; /* main-foreground */
+  --color-mg-cream: #ebffde; /* secondary-foreground / Background */
+  --color-mg-ink: #0f1720; /* border-outline */
+  --color-mg-sun: #ffd166; /* promo-border */
+  --color-mg-teal: #00b3a6; /* secondary-main-foreground */
+  --color-mg-indigo: #4f46e5; /* secondary-border */
+  --color-mg-red: #e11d48; /* danger-border */
+
+  --radius-neo: 5px; /* Border radius */
+
+  /* Box Shadow: offset 4/4, blur 0, warna Border (#000) */
+  --shadow-neo-sm: 2px 2px 0 0 #000;
+  --shadow-neo: 4px 4px 0 0 #000;
+  --shadow-neo-lg: 6px 6px 0 0 #000;
+  --shadow-neo-xl: 8px 8px 0 0 #000;
+
+  --animate-marquee: marquee 30s linear infinite;
+  --animate-float: float 3.2s ease-in-out infinite;
+  --animate-spin-slow: spin 24s linear infinite;
+  --animate-wiggle: wiggle 2.4s ease-in-out infinite;
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-14px);
+    }
+  }
+
+  @keyframes wiggle {
+    0%,
+    100% {
+      transform: rotate(-6deg);
+    }
+    50% {
+      transform: rotate(6deg);
+    }
+  }
+}
+
+/* Kartu neobrutalism: garis tebal + shadow keras tanpa blur */
+@utility neo-card {
+  background-color: var(--color-mg-cream);
+  border: 2px solid var(--color-mg-ink);
+  border-radius: var(--radius-neo);
+  box-shadow: var(--shadow-neo);
+}
+
+/* Tombol dengan efek "terangkat" saat hover dan "ditekan" saat klik */
+@utility neo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 2px solid var(--color-mg-ink);
+  border-radius: var(--radius-neo);
+  box-shadow: var(--shadow-neo);
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background-color 0.12s ease;
+
+  &:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-neo-lg);
+  }
+
+  &:active {
+    transform: translate(4px, 4px);
+    box-shadow: 0 0 0 0 #000;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+    box-shadow: var(--shadow-neo);
+  }
+}
+
+/* Kartu yang ikut terangkat saat hover */
+@utility neo-lift {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: var(--shadow-neo-xl);
+  }
+}
+
+@utility neo-input {
+  width: 100%;
+  background-color: #fff;
+  border: 2px solid var(--color-mg-ink);
+  border-radius: var(--radius-neo);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--color-mg-ink);
+  transition: box-shadow 0.12s ease;
+
+  &::placeholder {
+    color: rgb(15 23 32 / 0.5);
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: var(--shadow-neo);
+  }
+
+  &:read-only {
+    background-color: var(--color-mg-cream);
+  }
+}
+
+/* Pola grid seperti background app. Warna garis bisa diganti via --grid-line */
+@utility bg-neo-grid {
+  background-image:
+    linear-gradient(to right, var(--grid-line, rgb(15 23 32 / 0.07)) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line, rgb(15 23 32 / 0.07)) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+@utility bg-neo-dots {
+  background-image: radial-gradient(var(--dot-color, rgb(15 23 32 / 0.18)) 1.2px, transparent 1.6px);
+  background-size: 18px 18px;
+}
+
+/* Tekstur grain seperti di Figma (noise SVG, tanpa file gambar tambahan) */
+@utility neo-grain {
+  position: relative;
+  isolation: isolate;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.22;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 88px;
+}
 
 body {
-  font-family: "Poppins", sans-serif;
-  scroll-behavior: smooth;
   margin: 0;
-  background-color: #f9fafb; /* bg-gray-50 */
-  color: #1f2937; /* text-gray-800 */
+  font-family: var(--font-sans);
+  background-color: var(--color-mg-cream);
+  color: var(--color-mg-ink);
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
 }
 
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
+::selection {
+  background-color: var(--color-mg-sun);
+  color: var(--color-mg-ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-mg-indigo);
+  outline-offset: 2px;
+}
+
+/* Leaflet: penanda peta bergaya neobrutalism */
+.neo-pin {
+  background: transparent;
+  border: none;
+}
+
+.neo-pin span {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+  /* Ujung panah (≈10px di bawah label) tepat di titik koordinat */
+  transform: translate(-50%, calc(-100% - 10px));
+  padding: 4px 8px;
+  border: 2px solid var(--color-mg-ink);
+  border-radius: var(--radius-neo);
+  box-shadow: var(--shadow-neo-sm);
+  font: 700 12px/1.1 var(--font-sans);
+  color: var(--color-mg-ink);
+}
+
+.neo-pin span::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 10px;
+  height: 10px;
+  transform: translateX(-50%) rotate(45deg);
+  background: inherit;
+  border-right: 2px solid var(--color-mg-ink);
+  border-bottom: 2px solid var(--color-mg-ink);
+}
+
+.leaflet-container {
+  font-family: var(--font-sans);
+}
+
+.leaflet-tooltip.neo-tooltip {
+  background: var(--color-mg-indigo);
+  color: #fff;
+  border: 2px solid var(--color-mg-ink);
+  border-radius: var(--radius-neo);
+  box-shadow: var(--shadow-neo-sm);
+  font-weight: 700;
+}
+
+.leaflet-tooltip.neo-tooltip::before {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
-  50% {
-    transform: translateY(-20px);
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-/* Hapus override bawaan Vite */
-#root {
-  max-width: none;
-  padding: 0;
-  margin: 0;
-  text-align: left;
-}
-
-html,
-body {
-  scroll-behavior: smooth;
 }
