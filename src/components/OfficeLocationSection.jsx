@@ -1,3 +1,7 @@
+import { Buildings, MapPin, ArrowSquareOut } from "@phosphor-icons/react";
+import SectionHeading, { Highlight } from "./neo/SectionHeading";
+import { Squiggle, DotRings, Sparkle } from "./neo/Decor";
+
 const OFFICE_COORDS = {
   lat: 3.500243416002398,
   lng: 98.59222686788182,
@@ -9,19 +13,29 @@ export default function OfficeLocationSection() {
   const embedUrl = `https://www.google.com/maps?q=${OFFICE_COORDS.lat},${OFFICE_COORDS.lng}&z=16&output=embed`;
 
   return (
-    <section id="office-location" className="py-12 sm:py-20 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="text-center mb-10">
-          <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
-            Lokasi <span className="text-green-600">Kantor MahaGo</span>
-          </h3>
-          <p className="text-gray-600 text-sm sm:text-base">
-            Kamu bisa datang langsung ke kantor kami sesuai koordinat berikut.
-          </p>
-        </div>
+    <section
+      id="office-location"
+      className="neo-grain bg-neo-grid relative overflow-hidden bg-mg-green-deep py-16 sm:py-24 [--grid-line:rgb(235_255_222/0.1)]"
+    >
+      <Squiggle className="absolute top-10 left-4 w-28" />
+      <DotRings className="absolute bottom-6 right-4 w-20 hidden sm:block" />
+      <Sparkle className="absolute top-20 right-[10%] w-9" />
 
-        <div className="bg-white border-2 border-gray-200 rounded-2xl shadow-lg overflow-hidden">
-          <div className="h-80 sm:h-96">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
+        <SectionHeading
+          tone="dark"
+          eyebrow="Lokasi"
+          icon={Buildings}
+          title={
+            <>
+              Lokasi <Highlight>Kantor MahaGo</Highlight>
+            </>
+          }
+          subtitle="Kamu bisa datang langsung ke kantor kami sesuai koordinat berikut."
+        />
+
+        <div className="neo-card bg-white shadow-neo-xl overflow-hidden">
+          <div className="h-80 sm:h-96 border-b-2 border-mg-ink">
             <iframe
               title="Lokasi Kantor MahaGo"
               src={embedUrl}
@@ -30,20 +44,28 @@ export default function OfficeLocationSection() {
               referrerPolicy="no-referrer-when-downgrade"
             ></iframe>
           </div>
-          <div className="p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <p className="text-sm text-gray-600">Koordinat</p>
-              <p className="text-lg font-semibold text-gray-900">
-                {OFFICE_COORDS.lat.toFixed(6)}, {OFFICE_COORDS.lng.toFixed(6)}
-              </p>
+          <div className="p-5 sm:p-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="grid place-items-center w-11 h-11 shrink-0 bg-mg-red text-white border-2 border-mg-ink rounded-neo shadow-neo-sm">
+                <MapPin size={24} aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-mg-ink/70">
+                  Koordinat
+                </p>
+                <p className="font-display font-black text-lg text-mg-ink">
+                  {OFFICE_COORDS.lat.toFixed(6)}, {OFFICE_COORDS.lng.toFixed(6)}
+                </p>
+              </div>
             </div>
             <a
               href={OFFICE_MAP_LINK}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center justify-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition"
+              className="neo-btn bg-mg-sun text-mg-ink px-6 py-3"
             >
               Buka di Google Maps
+              <ArrowSquareOut size={20} aria-hidden="true" />
             </a>
           </div>
         </div>
