@@ -30,7 +30,6 @@
   --animate-marquee: marquee 30s linear infinite;
   --animate-float: float 3.2s ease-in-out infinite;
   --animate-spin-slow: spin 24s linear infinite;
-  --animate-wiggle: wiggle 2.4s ease-in-out infinite;
 
   @keyframes marquee {
     from {
@@ -48,16 +47,6 @@
     }
     50% {
       transform: translateY(-14px);
-    }
-  }
-
-  @keyframes wiggle {
-    0%,
-    100% {
-      transform: rotate(-6deg);
-    }
-    50% {
-      transform: rotate(6deg);
     }
   }
 }
