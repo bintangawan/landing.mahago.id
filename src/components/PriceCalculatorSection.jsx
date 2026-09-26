@@ -24,7 +24,9 @@ const BASE_FARE = 5000;
 const EXTRA_PER_KM = 2000;
 const EXTRA_STOP_FEE = 1000;
 const LATE_CHARGE_FEE = 2000;
-const RAIN_CHARGE_FEE = 1000;
+const LATE_CHARGE_START_MINUTES = 23 * 60;
+const LATE_CHARGE_END_MINUTES = 6 * 60;
+const RAIN_CHARGE_FEE = 2000;
 const RAIN_PRECIPITATION_THRESHOLD = 2.0;
 const DEFAULT_CENTER = CAMPUS_COORDS;
 const MAP_PICK_LABEL = "Titik pilihan di peta";
@@ -182,7 +184,12 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
 
   const isLateCharge = useMemo(() => {
     const timeMinutes = parseTimeToMinutes(orderTime);
-    return timeMinutes !== null && timeMinutes >= 23 * 60;
+    if (timeMinutes === null) return false;
+    // Rentang malam melewati tengah malam: 23:00 sampai sebelum 06:00.
+    return (
+      timeMinutes >= LATE_CHARGE_START_MINUTES ||
+      timeMinutes < LATE_CHARGE_END_MINUTES
+    );
   }, [orderTime]);
 
   const isRaining = autoRain;
@@ -236,7 +243,7 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
             coords: { lat: Number.parseFloat(result.lat), lng: Number.parseFloat(result.lon) },
           }))
         );
-      } catch (error) {
+      } catch {
         if (!isCancelled) {
           setDestinationError("Lokasi tidak ditemukan.");
         }
@@ -281,7 +288,7 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
             coords: { lat: Number.parseFloat(result.lat), lng: Number.parseFloat(result.lon) },
           }))
         );
-      } catch (error) {
+      } catch {
         if (!isCancelled) {
           setPickupError("Lokasi tidak ditemukan.");
         }
@@ -397,7 +404,9 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
       setWeatherUpdatedAt(new Date());
     } catch (error) {
       console.warn("Weather fetch failed", error);
-      setWeatherError("Cuaca tidak tersedia. Bisa atur manual jika perlu.");
+      setWeatherError(
+        "Cuaca tidak tersedia. Charge hujan akan dikonfirmasi admin saat order."
+      );
       setWeatherDetails(null);
     } finally {
       setIsWeatherLoading(false);
@@ -531,7 +540,6 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
     return lines.join("\n");
   }, [
     destination,
-    destinationQuery,
     serviceType,
     pickupPoints,
     distanceKm,
@@ -542,6 +550,7 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
     totalFare,
     orderNotes,
     currentCoords,
+    orderTime,
   ]);
 
   useEffect(() => {
@@ -835,7 +844,8 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                   )}
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  Dari kampus via rute. 3 km pertama Rp 5.000, +Rp 2.000/km.
+                  Dari kampus via rute. {BASE_KM} km pertama Rp{" "}
+                  {formatRupiah(BASE_FARE)}, +Rp {formatRupiah(EXTRA_PER_KM)}/km.
                 </p>
                 {isRouting && (
                   <p className="text-xs text-gray-500 mt-2">
@@ -943,7 +953,8 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                     className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition"
                   />
                   <p className="text-xs text-gray-500 mt-2">
-                    Charge Rp 2.000 kalau booking di jam &gt;= 23:00.
+                    Charge Rp {formatRupiah(LATE_CHARGE_FEE)} untuk booking
+                    jam 23:00 – 06:00.
                   </p>
                 </div>
 
@@ -962,6 +973,8 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                   {weatherDetails && (
                     <p className="text-xs text-gray-500 mt-2">
                       {weatherDetails.sourceLabel}: {weatherDetails.precipitation}mm, kode {weatherDetails.weatherCode}
+                      {weatherUpdatedAt &&
+                        ` · update ${weatherUpdatedAt.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`}
                     </p>
                   )}
                 </div>
@@ -980,7 +993,7 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                     className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
                   />
                   <span className="text-sm font-semibold text-gray-700">
-                    Charge Waktu (Rp 2.000)
+                    Charge Waktu (Rp {formatRupiah(LATE_CHARGE_FEE)})
                   </span>
                   <span
                     className={`ml-auto px-2 py-1 rounded-full text-xs font-semibold ${
@@ -1002,7 +1015,7 @@ export default function PriceCalculatorSection({ onOrderMessageChange }) {
                       className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                     />
                     <span className="text-sm font-semibold text-gray-700">
-                      Charge Hujan (Rp 1.000)
+                      Charge Hujan (Rp {formatRupiah(RAIN_CHARGE_FEE)})
                     </span>
                     <span
                       className={`ml-auto px-2 py-1 rounded-full text-xs font-semibold ${
