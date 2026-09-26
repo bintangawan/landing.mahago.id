@@ -231,6 +231,29 @@ body {
   font-family: var(--font-sans);
 }
 
+.leaflet-touch .leaflet-bar,
+.leaflet-bar {
+  border: 2px solid var(--color-mg-ink);
+  border-radius: var(--radius-neo);
+  box-shadow: var(--shadow-neo-sm);
+}
+
+.leaflet-bar a {
+  color: var(--color-mg-ink);
+  font-weight: 700;
+}
+
+.leaflet-bar a:hover {
+  background-color: var(--color-mg-sun);
+}
+
+.leaflet-popup-content-wrapper {
+  border: 2px solid var(--color-mg-ink);
+  border-radius: var(--radius-neo);
+  box-shadow: var(--shadow-neo);
+  font-weight: 600;
+}
+
 .leaflet-tooltip.neo-tooltip {
   background: var(--color-mg-indigo);
   color: #fff;

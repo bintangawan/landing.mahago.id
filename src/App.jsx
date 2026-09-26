@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { IconContext } from "@phosphor-icons/react";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import PromoBanner from "./components/PromoBanner";
 import Fitur from "./components/Fitur";
 import PromoSection from "./components/PromoSection";
-import PriceCalculatorSection from "./components/PriceCalculatorSection";
 import HowToOrderSection from "./components/HowToOrderSection";
 import ContactSection from "./components/ContactSection";
 import OfficeLocationSection from "./components/OfficeLocationSection";
@@ -16,6 +15,12 @@ import InstallPWASection from "./components/InstallPWASection";
 import Footer from "./components/Footer";
 import Marquee from "./components/neo/Marquee";
 import { DEFAULT_ORDER_MESSAGE } from "./utils/adminHelper";
+
+// Kalkulator memuat Leaflet (dependency terbesar), jadi dipisah ke chunk
+// sendiri supaya hero tampil lebih cepat.
+const PriceCalculatorSection = lazy(() =>
+  import("./components/PriceCalculatorSection")
+);
 
 const MARQUEE_ITEMS = [
   "#SahabatMahasiswa",
@@ -43,7 +48,17 @@ export default function App() {
           <PromoBanner />
           <Fitur />
           <PromoSection />
-          <PriceCalculatorSection onOrderMessageChange={setOrderMessage} />
+          <Suspense
+            fallback={
+              <section
+                id="tarif"
+                aria-busy="true"
+                className="min-h-screen bg-mg-cream bg-neo-dots"
+              />
+            }
+          >
+            <PriceCalculatorSection onOrderMessageChange={setOrderMessage} />
+          </Suspense>
           <HowToOrderSection />
           <WhatsAppGuideSection />
           <InstallPWASection />
