@@ -100,7 +100,7 @@ export default function WhatsAppGuideSection() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a
-                  href="https://chat.whatsapp.com/KqVoGZ6tjJH2RtkdPMMKAu"
+                  href="https://chat.whatsapp.com/K0sttWaHC0P8ntI8Ul6DwS"
                   target="_blank"
                   rel="noreferrer"
                   className="neo-btn bg-mg-sun text-mg-ink px-7 py-4 text-base sm:text-lg"
